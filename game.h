@@ -1,3 +1,3 @@
 #include<stdio.h>
 
-// Liste des signatures des fonction en C
+// Liste des signatures des fonctions
