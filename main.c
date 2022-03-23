@@ -51,7 +51,8 @@ void main()
 void initialisation_serpent()
 {
     for(i=0;i<N;i++){
-        for(j=0;j<M;j++){
+        for(j=0;j<M;j++)
+        {
             champ[i][j]=0;//pour dire que le champ est vide
         }
     }
@@ -84,7 +85,7 @@ void afficher(){
             printf("%c",187);
         }else// entre les deux coins du haut
         {
-            printf("%c",205);
+            printf("%c",196);
         }
     }
     printf("   Score: %d ",score);
@@ -92,15 +93,15 @@ void afficher(){
     // impression des caracteres pour les cotés et l'interieur de la fenetre
     for(i=0;i<N;i++)//coté gauche de la fenetre
     {
-        printf("%c",186);//caractere coté gauche de la fenetre
+        printf("%c",179);//caractere coté gauche de la fenetre
 
         for(j=0;j<M;j++)//coté gauche
         {
             if(champ[i][j]==0) printf(" ");//espace vide si rien dans le champs
-            if(champ[i][j]>0 && champ[i][j]!=tete) printf("%c",176);// caractere du corps, si champs = au corps du serpent de 1 à 4 (!= de tete)
-            if(champ[i][j]==tete) printf("%c",178);//caractere de la tete (si champs = à 5(la tete))
-            if(champ[i][j]==-1) printf("%c",15);//caractere de la pomme(si champs = à -1(la pomme))
-            if(j==M-1) printf("%c\n",186);//caractere coté droit de la fenetre
+            if(champ[i][j]>0 && champ[i][j]!=tete) printf("%c",35);// caractere du corps, si champs = au corps du serpent de 1 à 4 (!= de tete)
+            if(champ[i][j]==tete) printf("%c",2);//caractere de la tete (si champs = à 5(la tete))
+            if(champ[i][j]==-1) printf("%c",1);//caractere de la pomme(si champs = à -1(la pomme))
+            if(j==M-1) printf("%c\n",179);//caractere coté droit de la fenetre
         }
     }
     // impression des caracteres pour former le contour de la fenetre (cote inferieur)
@@ -113,7 +114,7 @@ void afficher(){
             printf("%c",188);
         }else//entre les deux coins du haut
         {
-            printf("%c",205);
+            printf("%c",196);
         }
     }
 }
@@ -160,7 +161,7 @@ void mouvement(){
     var = getch_noblock();//appel de la fonction 
     var = tolower(var);/*fonction pour convertir les maj et min en miniscule pour ne pas
                          avoir a se prendre la tete sur : si la touche maj est activé ou pas*/
-    if(((var=='d'||var=='a')||(var=='w'||var=='s'))
+    if(((var=='d'||var=='q')||(var=='z'||var=='s'))
        &&(abs(dir-var)>5)) dir = var;
        //valeur absolue de dir - var > 5 (sa taille etant de 5 pour ne pas revenir sur lui meme)
     
@@ -180,7 +181,7 @@ void mouvement(){
         champ[x][y] = tete;
     }
 
-    if(dir =='a')//direction gauche
+    if(dir =='q')//direction gauche
     {
         y--;//y diminue de 1 a chaque fois
         if(y==0) y = M-1;//pour le retour a la fin de la ligne
@@ -195,7 +196,7 @@ void mouvement(){
         champ[x][y] = tete;
     }
 
-    if(dir =='w')//direction nord (haut)
+    if(dir =='z')//direction nord (haut)
     {
         x--;//x diminue de 1 a chaque fois
         if(x==-1) x = N-1;//pour le retour a la fin de la ligne
@@ -241,7 +242,8 @@ void effacer_queue()//pour que la que accompagne le serpent dans son déplacemen
     queue++;//la queue se deplacera a la case suivante
 }
 
-void GameOver(){
+void GameOver()
+{
     printf("\a");// pour faire un son, un bip
     Sleep(1500);//marquer une pause de 1500 ms
     system("Cls");//pour vider l'ecran / clear screen
