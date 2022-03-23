@@ -4,208 +4,268 @@
 #include <conio.h>
 #include <time.h>
 
-#define N 20
-#define M 40
+//Déclaration des variables globales
 
-int i,j,Field[N][M],x,y,Gy,Head,Tail,Game,Frogs,a,b,var,dir,score,HighScore,Speed;
+#define N 20 // definition des rows (hauteur des bordures)
+#define M 40 // definition des columns(largeur des bordures)
 
-FILE *f;
+int i,j;
+int champ[N][M];//champs sous forme de tableau(matrice)
+int x, y, Gy;
+int tete, queue;
+int pommes, a, b;//a et b pour les positions(coordonnées) aléatoires des pommes;
+int jeu;
+int var;//qui prend la valeur sasie par l'utilisateur sur le clavier
+int dir,score,vitesse;
 
-void snakeInitialization(){
-    f=fopen("highscore.txt","r");
-    fscanf(f,"%d",&HighScore);
-    fclose(f);
+//signature des fonctions du jeu
 
-    for(i=0;i<N;i++){
-        for(j=0;j<M;j++){
-            Field[i][j]=0;
-        }
-    }
+void initialisation_serpent();
+void afficher();
+void ResetScreenPosition();
+void generer_pomme();
+int getch_noblock();
+void mouvement();
+void effacer_queue();
+void GameOver();
 
-    x=N/2;y=M/2; Gy = y; Head = 5; Tail =1; Game = 0,Frogs = 0,dir='d',score=0,Speed = 99;
+//programme principal
 
-    for(i=0;i<Head;i++){
-        Gy++;
-        Field[x][Gy-Head] = i+1;
+void main()
+{
+    initialisation_serpent();
+
+    while(jeu == 0)// jeu en cours (si jeu == 1, jeu = terminé)
+    {
+        afficher();
+        ResetScreenPosition();
+        generer_pomme();
+        mouvement();
+        effacer_queue();
+        Sleep(vitesse);/*a chaque fois que le serpent mange une pomme 
+                        la vitesse descend de 5, on l'assignant a la fonction
+                        sleeep, le temps de sleep diminue donc la vitesse augmente*/
     }
 }
 
-void print(){
+void initialisation_serpent()
+{
+    for(i=0;i<N;i++){
+        for(j=0;j<M;j++){
+            champ[i][j]=0;//pour dire que le champ est vide
+        }
+    }
+
+    x = N/2; y = M/2;//initialiser les coordonnées x et y au centre (x a 10, et y a 20)
+    Gy = y; //Gy=20
+    tete = 5;
+    queue = 1;
+    jeu = 0; // jeu en cours (si jeu = 1, jeu = terminé)
+    pommes = 0; //initialiser les pommes a 0 (pas de pommes)
+    dir='d';//initialiser la direction a d (direction droite)
+    score=0;
+    vitesse = 99;
+
+    for(i=0;i<tete;i++)//le reste du corps entre 1(queue) et 5(tete)
+    {
+        Gy++;//21;22...
+        champ[x][Gy-tete] = i+1;//1=champ[10][16(21-5)]; 2=[10][17(22-5)]; 3=...; 4=...
+    }
+}
+
+void afficher(){
+    // impression des caracteres pour former le contour de la fenetre (cote superieur)
     for(i=0;i<=M+1;i++){
-        if(i==0){
+        if(i==0)// coin haut gauche
+        {
             printf("%c",201);
-        }else if(i==M+1){
+        }else if(i==M+1)// coin haut droit
+        {
             printf("%c",187);
-        }else{
+        }else// entre les deux coins du haut
+        {
             printf("%c",205);
         }
     }
-    printf("   Current Score: %d  HighScore: %d",score,HighScore);
-    printf("\n");
+    printf("   Score: %d ",score);
+    printf("\n");//passer a la deuxième ligne
+    // impression des caracteres pour les cotés et l'interieur de la fenetre
+    for(i=0;i<N;i++)//coté gauche de la fenetre
+    {
+        printf("%c",186);//caractere coté gauche de la fenetre
 
-    for(i=0;i<N;i++){
-        printf("%c",186);
-
-        for(j=0;j<M;j++){
-            if(Field[i][j]==0) printf(" ");
-            if(Field[i][j]>0 && Field[i][j]!=Head) printf("%c",176);
-            if(Field[i][j]==Head) printf("%c",178);
-            if(Field[i][j]==-1) printf("%c",15);
-            if(j==M-1) printf("%c\n",186);
+        for(j=0;j<M;j++)//coté gauche
+        {
+            if(champ[i][j]==0) printf(" ");//espace vide si rien dans le champs
+            if(champ[i][j]>0 && champ[i][j]!=tete) printf("%c",176);// caractere du corps, si champs = au corps du serpent de 1 à 4 (!= de tete)
+            if(champ[i][j]==tete) printf("%c",178);//caractere de la tete (si champs = à 5(la tete))
+            if(champ[i][j]==-1) printf("%c",15);//caractere de la pomme(si champs = à -1(la pomme))
+            if(j==M-1) printf("%c\n",186);//caractere coté droit de la fenetre
         }
     }
-
+    // impression des caracteres pour former le contour de la fenetre (cote inferieur)
     for(i=0;i<=M+1;i++){
-        if(i==0){
+        if(i==0)// coin bas gauche
+        {
             printf("%c",200);
-        }else if(i==M+1){
+        }else if(i==M+1)//coin bas droit 
+        {
             printf("%c",188);
-        }else{
+        }else//entre les deux coins du haut
+        {
             printf("%c",205);
         }
     }
 }
-void ResetScreenPosition(){
-    HANDLE hOut;
+void ResetScreenPosition()/*pour remettre le curseur à chaque fin de 
+                        boucle d'affichage au debut de la page pour ne
+                        pas creer de nouvelle fenetre a chaque fois et
+                        avoir une infinitée de fenetres qui défile */
+{
+    HANDLE hOut;// variable de type HANDLE
     COORD Position;
-    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE); //on assigne la fonction a la var hout
+    //placer les coordonées au debut de l'ecran
     Position.X = 0;
     Position.Y = 0;
-    SetConsoleCursorPosition(hOut,Position);
+    SetConsoleCursorPosition(hOut,Position);// appel de la fonction avec les deux parametre déclarés
 }
 
 
-void Random(){
-    srand(time(0));
-    a = 1+ rand() % 18;
-    b = 1 + rand() % 38;
+void generer_pomme(){
+    srand(time(0));/* Initialiser le générateur aleatoire en se basant sur l'heure de
+                    la machine et qui produit des nombres differents a chaque instant*/
+    a = 1+ rand() % 18;// generer un nombre entre 0 et 18
+    b = 1 + rand() % 38;// generer un nombre entre 0 et 38
 
-    if(Frogs == 0 && Field[a][b]==0){
-        Field[a][b]= -1;
-        Frogs = 1;
-        if(Speed>10 && score!=0) Speed = Speed - 5;
+    if(pommes == 0 && champ[a][b]==0)/*verifier si il ya déja une pomme ou pas(=0)
+                                       et verifier si le champ est vide (=0) pour 
+                                       ne pas creer une pomme sur le serpent */
+    {
+        champ[a][b]= -1; // on assigne la valeur -1 aux coord (a,b)
+        pommes = 1;// actualiser la valeur de pommes a 1 au lieu de 0(pas de pommmes)
+        if(vitesse>10 && score!=0) vitesse = vitesse - 5; //pour augmenter la vitesse
     }
 }
 
-int getch_noblock(){
-    if(_kbhit())
-        return _getch();
+int getch_noblock()//recuperation des valeurs saisie sur le clavier
+{
+    if(_kbhit())//si le clavier est touché 
+        return _getch(); //retourn la valeur du charactère touché sur le clavier
     else
-        return -1;
+        return -1;// retourner la valeur de -1 qui est (rien)
 }
 
-void movement(){
-    var = getch_noblock();
-    var = tolower(var);
-
+void mouvement(){
+    var = getch_noblock();//appel de la fonction 
+    var = tolower(var);/*fonction pour convertir les maj et min en miniscule pour ne pas
+                         avoir a se prendre la tete sur : si la touche maj est activé ou pas*/
     if(((var=='d'||var=='a')||(var=='w'||var=='s'))
        &&(abs(dir-var)>5)) dir = var;
-    if(dir =='d'){
-        y++;
-        if(y==M-1) y = 0;
-        if(Field[x][y]!=0 && Field[x][y]!=-1) GameOver();
-        if(Field[x][y]==-1){
-            Frogs = 0;
+       //valeur absolue de dir - var > 5 (sa taille etant de 5 pour ne pas revenir sur lui meme)
+    
+    if(dir =='d')//si on appuie sur d (direction droite)
+    {
+        y++;//y augmente de 1 a chaque fois
+        if(y==M-1) y = 0;//pour le retour a au debut de la ligne
+        if(champ[x][y]!=0 && champ[x][y]!=-1) GameOver();//ça veut dire que le serpent s'est touché le corps
+        if(champ[x][y]==-1)//si la tete du serpent se trouve sur la valeur de la pomme(-1)
+        {
+            pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            Tail -= 1;
+            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
         }
 
-        Head++;
-        Field[x][y] = Head;
+        tete++;//la tete se deplace une fois
+        champ[x][y] = tete;
     }
 
-    if(dir =='a'){
-        y--;
-        if(y==0) y = M-1;
-        if(Field[x][y]!=0 && Field[x][y]!=-1) GameOver();
-        if(Field[x][y]==-1){
-            Frogs = 0;
+    if(dir =='a')//direction gauche
+    {
+        y--;//y diminue de 1 a chaque fois
+        if(y==0) y = M-1;//pour le retour a la fin de la ligne
+        if(champ[x][y]!=0 && champ[x][y]!=-1) GameOver();//ça veut dire que le serpent s'est touché le corps
+        if(champ[x][y]==-1)//si la tete du serpent se trouve sur la valeur de la pomme(-1)
+        {
+            pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            Tail -= 1;
+            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
         }
-        Head++;
-        Field[x][y] = Head;
+        tete++;//la tete se deplace une fois
+        champ[x][y] = tete;
     }
 
-    if(dir =='w'){
-        x--;
-        if(x==-1) x = N-1;
-        if(Field[x][y]!=0 && Field[x][y]!=-1) GameOver();
-        if(Field[x][y]==-1){
-            Frogs = 0;
+    if(dir =='w')//direction nord (haut)
+    {
+        x--;//x diminue de 1 a chaque fois
+        if(x==-1) x = N-1;//pour le retour a la fin de la ligne
+        if(champ[x][y]!=0 && champ[x][y]!=-1) GameOver();//ça veut dire que le serpent s'est touché le corps
+        if(champ[x][y]==-1)//si la tete du serpent se trouve sur la valeur de la pomme(-1)
+        {
+            pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            Tail -= 1;
+            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
         }
-        Head++;
-        Field[x][y] = Head;
+        tete++;//la tete se deplace une fois
+        champ[x][y] = tete;
     }
 
-    if(dir =='s'){
-        x++;
-        if(x==N-1) x = 0;
-        if(Field[x][y]!=0 && Field[x][y]!=-1) GameOver();
-        if(Field[x][y]==-1){
-            Frogs = 0;
+    if(dir =='s')//direction sud (bas)
+    {
+        x++;//x augmente de 1 a chaque fois
+        if(x==N-1) x = 0;//pour le retour au debut de la ligne
+        if(champ[x][y]!=0 && champ[x][y]!=-1) GameOver();//ça veut dire que le serpent s'est touché le corps
+        if(champ[x][y]==-1)//si la tete du serpent se trouve sur la valeur de la pomme(-1)
+        {
+            pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            Tail -= 1;
+            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
         }
-        Head++;
-        Field[x][y] = Head;
+        tete++;//la tete se deplace une fois
+        champ[x][y] = tete;
     }
 }
 
-void TailRemove(){
-    for(i=0;i<N;i++){
-        for(j=0;j<M;j++){
-            if(Field[i][j]==Tail){
-                Field[i][j] = 0;
+void effacer_queue()//pour que la que accompagne le serpent dans son déplacement
+{
+    for(i=0;i<N;i++)
+    {
+        for(j=0;j<M;j++)
+        {
+            if(champ[i][j]==queue)//si le champ correspond a la queue
+            {
+                champ[i][j] = 0;//vider l'espace dans le champs
             }
         }
     }
-    Tail++;
+    queue++;//la queue se deplacera a la case suivante
 }
 
 void GameOver(){
-    printf("\a");
-    Sleep(1500);
-    system("Cls");
-
-    if(score>HighScore){
-        printf("  New HighScore %d!!!!!!\n\n",score);
-        system("pause");
-        f=fopen("highscore.txt","w");
-        fprintf(f,"%d",score);
-        fclose(f);
-    }
+    printf("\a");// pour faire un son, un bip
+    Sleep(1500);//marquer une pause de 1500 ms
+    system("Cls");//pour vider l'ecran / clear screen
 
     system("Cls");
-    printf("\n\n         GAME OVER !!!!!!\n");
+    printf("\n\n         Game OVER !!!!!!\n");
     printf("             Score : %d \n\n",score);
-    printf("             Press ENTER to play again or ESC to exit ... \n");
+    printf("             appuyez sur entree pour jouer a nouveau ou Echap pour sortir ... \n");
 
 
-    while(1){
-        var = getch_noblock();
-        if(var == 13){
-            Game = 0;
-            snakeInitialization();
+    while(1)
+    {
+        var = getch_noblock();//appel fonction recuperation valeurs saisies
+        if(var == 13)//correspont a la touche entree
+        {
+            jeu = 0;//jeu devient en cours
+            initialisation_serpent();//redemarer le jeu
             break;
-        }else if(var == 27){
-            Game = 1;
+        }
+        else if(var == 27)//correspont a la touche Echap
+        {
+            jeu = 1;//jeu devient terminé
             break;
         }
     }
-    system("Cls");
-}
-void main(){
-    snakeInitialization();
-
-    while(Game == 0){
-        print();
-        ResetScreenPosition();
-        Random();
-        movement();
-        TailRemove();
-        Sleep(Speed);
-    }
+    system("Cls");//vider l'ecran
 }
