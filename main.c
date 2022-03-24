@@ -16,7 +16,7 @@ int tete, queue;
 int pommes, a, b;//a et b pour les positions(coordonnées) aléatoires des pommes;
 int jeu;
 int var;//qui prend la valeur sasie par l'utilisateur sur le clavier
-int dir,score,vitesse;
+int dir,compteur=0,score,vitesse;
 
 //signature des fonctions du jeu
 
@@ -161,10 +161,12 @@ void mouvement(){
     var = getch_noblock();//appel de la fonction 
     var = tolower(var);/*fonction pour convertir les maj et min en miniscule pour ne pas
                          avoir a se prendre la tete sur : si la touche maj est activé ou pas*/
-    if(((var=='d'||var=='q')||(var=='z'||var=='s'))
-       &&(abs(dir-var)>5)) dir = var;
+    
+    if(((var=='d'||var=='q')||(var=='z'||var=='s')) 
+    && (abs(dir-var)>5)) dir = var;
        //valeur absolue de dir - var > 5 (sa taille etant de 5 pour ne pas revenir sur lui meme)
     
+
     if(dir =='d')//si on appuie sur d (direction droite)
     {
         y++;//y augmente de 1 a chaque fois
@@ -174,7 +176,14 @@ void mouvement(){
         {
             pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+            compteur++;
+            if(compteur==3)
+            {
+                queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+                compteur=0;
+
+            }
+            
         }
 
         tete++;//la tete se deplace une fois
@@ -190,7 +199,14 @@ void mouvement(){
         {
             pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+          compteur++;
+            if(compteur==3)
+            {
+                queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+                compteur=0;
+
+            }  
+           
         }
         tete++;//la tete se deplace une fois
         champ[x][y] = tete;
@@ -205,7 +221,13 @@ void mouvement(){
         {
             pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+            compteur++;
+            if(compteur==3)
+            {
+                queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+                compteur=0;
+
+            }
         }
         tete++;//la tete se deplace une fois
         champ[x][y] = tete;
@@ -220,7 +242,13 @@ void mouvement(){
         {
             pommes = 0;//valeur 0, pas de pommes, il y'aura donc appel d'une pomme
             score+=5;
-            queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+           compteur++;
+            if(compteur==3)
+            {
+                queue -= 1;//la qeue augmente de 1, en diminuant sa valeur de 1
+                compteur=0;
+
+            }
         }
         tete++;//la tete se deplace une fois
         champ[x][y] = tete;
